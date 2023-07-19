@@ -33,4 +33,6 @@ Route::controller(TodolistController::class)->group(function() {
     Route::get('/todolist/tasks', 'show')->middleware("auth")->name('todolist.show');
     Route::post('/todolist', 'store')->middleware("auth");
     Route::delete('/todolist/{task_id}', 'destroy')->middleware("auth");
+    Route::post('/upload', 'upload');
+    Route::get('/img/{img_name}', 'img');
 });

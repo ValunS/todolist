@@ -20,7 +20,7 @@
                             {{ json_encode($tasks) }}
                         </div>
                     @endif
-                    <div class="row container d-flex justify-content-center">
+                    <div class="row container d-flex justify-content-center mx-auto">
                         <div class="col-md-12">
 
                             <h1 class="mt-3">To-Do List</h1>
@@ -29,9 +29,11 @@
                                 <input name="title" class="form-control todo-list-input" type="text" id="todo-title"
                                     placeholder="Enter title">
                                 <textarea name="full_text" class="form-control mt-3" type="text" id="todo-full_text" placeholder="Enter full_text"></textarea>
-                                <input type="file" name="image" class="form-control todo-list-input mt-3">
+                                <input type="file" id="todo-img" name="image"
+                                    class="form-control todo-list-input mt-3" accept="image/png, image/gif, image/jpeg">
+                                <button id="add-btn" class="btn btn-success mt-3 w-50 mx-auto d-block">Add in to-do
+                                    list</button>
                             </form>
-                            <button id="add-btn" class="btn btn-primary mt-3">Add</button>
                             <div class="list-container">
                                 <div class="accordion accordion-flush" id="accordionToDo">
                                     <div class="accordion-item">
@@ -57,24 +59,54 @@
             </div>
         </div>
     </div>
-    </div>
-    </div>
-    </div>
+    {{-- <form id="imageForm" enctype="multipart/form-data">
+        <input type="file" id="imageInput" name="image">
+        <input type="text" id="formatInput" name="format">
+        <button type="submit">Отправить</button>
+    </form>
+    <div id="imageContainer"></div> --}}
 @endsection
 @section('scripts')
     <script>
+        //Подключение csrf токена ко всем ajax jQuery 
         $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-        // Загрузка списка задач ajax (если есть)
 
+        $(document).ready(function() {
+            // Отправка изображения и формата на сервер при отправке формы
+            $('#imageForm').submit(function(e) {
+                e.preventDefault(); // Предотвращаем отправку формы по умолчанию
+
+                var formData = new FormData($(this)[0]); // Создаем объект FormData из формы
+                $.ajax({
+                    url: '/upload',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        // При успешной отправке выводим изображение
+                        $('#imageContainer').html('<img src="' + response.image_url +
+                            '" alt="Uploaded Image">');
+                    },
+                    error: function(xhr) {
+                        console.log(xhr.responseText);
+                    }
+                });
+            });
+        });
+
+
+
+
+        // Загрузка списка задач ajax (если есть)
         var todos = [];
         updateTasksFromServer();
-        // setInterval(() => {
-        //     updateTasksFromServer();
-        // }, 5000);
 
         async function updateTasksFromServer() {
             arr = [];
@@ -86,10 +118,8 @@
                 }
                 todos = arr;
                 displayTodos();
-                // return arr;
             } catch (error) {
                 console.log(error);
-                // return [];
             }
         }
 
@@ -135,17 +165,23 @@
         };
 
         // Add new task on click
-        $('#add-btn').click(function() {
+        $('#add-task-form').submit(function(e) {
+            e.preventDefault();
+            addButton = document.getElementById("add-btn");
+
+            addButton.disabled = true;
             const title = $('#todo-title').val();
             const full_text = $('#todo-full_text').val();
+            const image = $('#todo-img').val();
 
-            $('#todo-title').val('');
-            $('#todo-full_text').val('');
+
+
+            // addTaskForm = document.getElementById("add-task-form");
 
             formdata = {
                 title: title,
                 full_text: full_text,
-                // _token: '{!! csrf_token() !!}'
+                image: image,
             }
 
             console.log(formdata);
@@ -154,10 +190,16 @@
                 type: "POST",
                 data: formdata,
                 success: function(response) {
-                    // Получение и обработка ответа сервера
                     var postAjax = response;
                     console.log(postAjax);
                     updateTasksFromServer();
+                    $('#todo-title').val(''); //clear fields
+                    $('#todo-full_text').val('');
+                    $('#todo-img').val('');
+                    addButton.disabled = false;
+
+                    // $('#add-task-form').html('<img src="' + response.image_url +
+                    //     '" alt="Uploaded Image">');
                 }
             });
         }); //Add button click
@@ -187,5 +229,4 @@
             border-radius: 50px;
         }
     </style>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 @endsection
