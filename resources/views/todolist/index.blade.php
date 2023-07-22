@@ -24,13 +24,14 @@
                         <div class="col-md-12">
 
                             <h1 class="mt-3">To-Do List</h1>
-                            <form class="add-items" id="add-task-form">
+                            <form enctype="multipart/form-data" class="add-items" id="add-task-form">
                                 @csrf
                                 <input name="title" class="form-control todo-list-input" type="text" id="todo-title"
                                     placeholder="Enter title">
                                 <textarea name="full_text" class="form-control mt-3" type="text" id="todo-full_text" placeholder="Enter full_text"></textarea>
-                                <input type="file" id="todo-img" name="image"
+                                <input type="file" id="todo-img" name="todo-img"
                                     class="form-control todo-list-input mt-3" accept="image/png, image/gif, image/jpeg">
+                                    {{-- <input type="file" id="imageInput" name="image"> --}}
                                 <button id="add-btn" class="btn btn-success mt-3 w-50 mx-auto d-block">Add in to-do
                                     list</button>
                             </form>
@@ -54,6 +55,9 @@
                             </div>
 
                         </div>
+                        <div id="tryImage">
+
+                        </div>
                     </div>
                 </div>
             </div>
@@ -74,35 +78,6 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-
-        $(document).ready(function() {
-            // Отправка изображения и формата на сервер при отправке формы
-            $('#imageForm').submit(function(e) {
-                e.preventDefault(); // Предотвращаем отправку формы по умолчанию
-
-                var formData = new FormData($(this)[0]); // Создаем объект FormData из формы
-                $.ajax({
-                    url: '/upload',
-                    type: 'POST',
-                    data: formData,
-                    dataType: 'json',
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    success: function(response) {
-                        // При успешной отправке выводим изображение
-                        $('#imageContainer').html('<img src="' + response.image_url +
-                            '" alt="Uploaded Image">');
-                    },
-                    error: function(xhr) {
-                        console.log(xhr.responseText);
-                    }
-                });
-            });
-        });
-
-
-
 
         // Загрузка списка задач ajax (если есть)
         var todos = [];
@@ -128,8 +103,10 @@
             $('#accordionToDo').empty(); //clear accordion
             todos.forEach(task => {
                 id = task.id;
+                console.log(task.img_src);
                 //template for create 1 todolist item
-                const deleteBtn = '<span class="btn-close ms-auto" onclick="deleteTodo(' + id + ')"></span>';
+                const imgTodo = task.img_src ? `<img enctype="multipart/form-data" src="${task.img_src}">` : ``;
+                const deleteBtn = `<span class="btn-close ms-auto" onclick="deleteTodo(${id})"></span>`;
                 const listItem = $('<div>', {
                     class: 'accordion-item mt-3 border-2 rounded-6',
                     html: `<h2 class="accordion-header" id="flush-heading${id}">
@@ -141,7 +118,7 @@
                         </h2>
                         <div id="flush-collapse${id}" class="accordion-collapse collapse"
                             aria-labelledby="flush-heading${id}" data-bs-parent="#accordionToDo">
-                            <div class="accordion-body">
+                            <div class="accordion-body">${imgTodo}
                                 ${task.full_text}
                             </div>
                         </div>`
@@ -167,28 +144,27 @@
         // Add new task on click
         $('#add-task-form').submit(function(e) {
             e.preventDefault();
+
             addButton = document.getElementById("add-btn");
-
             addButton.disabled = true;
-            const title = $('#todo-title').val();
-            const full_text = $('#todo-full_text').val();
-            const image = $('#todo-img').val();
 
-
+            // const title = $('#todo-title').val();
+            // const full_text = $('#todo-full_text').val();
+            // const image = $('#todo-img').val();
 
             // addTaskForm = document.getElementById("add-task-form");
 
-            formdata = {
-                title: title,
-                full_text: full_text,
-                image: image,
-            }
+            formData = new FormData($(this)[0]);
 
-            console.log(formdata);
+            console.log(formData);
             $.ajax({
                 url: "/todolist",
-                type: "POST",
-                data: formdata,
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                cache: false,
+                contentType: false,
+                processData: false,
                 success: function(response) {
                     var postAjax = response;
                     console.log(postAjax);
@@ -197,9 +173,14 @@
                     $('#todo-full_text').val('');
                     $('#todo-img').val('');
                     addButton.disabled = false;
-
-                    // $('#add-task-form').html('<img src="' + response.image_url +
-                    //     '" alt="Uploaded Image">');
+                    // tryImage.outerHTML = '<img src="' + response.image_url + //create image under page
+                    //     '" alt="Uploaded Image">';
+                },
+                error: function(xhr) {
+                    setTimeout(() => {
+                        addButton.disabled = false;
+                    }, 5000); 
+                    console.log({ERROR:xhr.responseText});
                 }
             });
         }); //Add button click

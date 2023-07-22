@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginRegisterController;
 use App\Http\Controllers\TodolistController;
+use App\Http\Controllers\TaskImageController;
 use App\Models\Todolist_task;
 use Illuminate\Http\Request; 
 /*
@@ -33,6 +34,10 @@ Route::controller(TodolistController::class)->group(function() {
     Route::get('/todolist/tasks', 'show')->middleware("auth")->name('todolist.show');
     Route::post('/todolist', 'store')->middleware("auth");
     Route::delete('/todolist/{task_id}', 'destroy')->middleware("auth");
-    Route::post('/upload', 'upload');
-    Route::get('/img/{img_name}', 'img');
+    // Route::get('/task-img/{task_id}/{img_name}', 'imageShow')->name('image.show');
+});
+
+Route::controller(TaskImageController::class)->group(function() {
+    Route::get('/task-img/{task_id}/{imgName_Or_thumbPath}/',                    'show')->name('image.show');
+    Route::get('/task-img/{task_id}/{imgName_Or_thumbPath}/{imgName_If_exists}', 'show')->name('image.show');
 });
