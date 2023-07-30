@@ -6,6 +6,7 @@ use App\Models\Todolist_task;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 // use Intervention\Image\Facades\Image as Image;
 
 class TodolistController extends Controller
@@ -37,26 +38,57 @@ class TodolistController extends Controller
 
     public function store(Request $request)
     {
-
         if (Auth::check()) {
-            $response = [];
+            $response = []; //collect all messages
             $img_src = null;
-            if ($request->hasFile('todo-img') && $request->file('todo-img')->isValid()) {
-                // if (TaskImageController::storeImageValidation($request->file('todo-img'))) {
-                    $TaskImageClass = new TaskImageController;
-                    $img_src = $TaskImageClass->storeImage($request->file("todo-img"), $request->user()->id); //save and get name file
-                // }
-            } else {
-                $response[] = ["BAD" => "Image not stored"];
-            };
-            Todolist_task::create([
+            $createdTask = Todolist_task::create([
                 "title" => $request->title,
                 "full_text" => $request->full_text,
                 "completed" => 0,
                 "img_src" => $img_src,
                 "user_id" => Auth::user()->id,
             ]);
-            $response[] = ["WELL" => "todolist.store good"];
+            if ($request->hasFile('todo-img') && $request->file('todo-img')->isValid()) {
+                // if (TaskImageController::storeImageValidation($request->file('todo-img'))) {
+                $currTaskId = $createdTask->id;
+                $TaskImageClass = new TaskImageController;
+                $img_src = $TaskImageClass->storeImage($currTaskId, $request->file("todo-img")); //store img and get src
+                $createdTask->update(["img_src" => $img_src]); //put stored img_src to task
+                // }
+            } else {
+                $response[] = ["BAD" => "Image not stored"];
+            };
+
+            $response[] = ["WELL" => "todolist.store good" . "   " . $createdTask];
+            return response()->json($response);
+        }
+
+        return redirect()->route('login')
+            ->withErrors([
+                'email' => 'Please login to access the todolist.',
+            ])->onlyInput('email');
+    }
+
+    public function update($id, Request $request)
+    {
+        if (Auth::check()) {
+            $response = []; //collect all messages
+            $gettedData = $request->all();
+            $dataForUpdateTask = [];
+            $this->addFieldIfExists($gettedData, $dataForUpdateTask, "title");
+            $this->addFieldIfExists($gettedData, $dataForUpdateTask, "full_text");
+            $this->addFieldIfExists($gettedData, $dataForUpdateTask, "completed");
+            if ($request->hasFile('task-img') && $request->file('task-img')->isValid()) { //add ["img_src"]
+                $TaskImageClass = new TaskImageController;
+                $dataForUpdateTask["img_src"] = $TaskImageClass->storeImage($id, $request->file("task-img"));
+            } else {
+                $response[] = ["BAD" => "Image not stored"];
+            };
+            $Task = Todolist_task::find((int) $id)->update(
+                $dataForUpdateTask
+            );
+
+            $response[] = ["WELL" => "todolist.update good" . "   " . $Task];
             return response()->json($response);
         }
 
@@ -70,7 +102,7 @@ class TodolistController extends Controller
     {
         if (Auth::check()) {
             $task = Todolist_task::findOrFail($task_id);
-            if ($task->user_id = Auth::user()->id) {
+            if ($task->user_id == Auth::user()->id) {
                 $task->delete();
                 return "Success deleted task " . $task_id;
             }
@@ -79,6 +111,16 @@ class TodolistController extends Controller
             ->withErrors([
                 'email' => 'Please login to access the todolist.',
             ])->onlyInput('email');
+    }
+
+    private function addFieldIfExists(&$arrayElements, &$arrayElements_If_exists, $key, $newKey = null)
+    {
+        $newKey = $newKey == null ? $key : $newKey; //newKey = $key if does not exists
+        if (array_key_exists($key, $arrayElements)) {
+            $arrayElements_If_exists[$newKey] = $arrayElements[$key];
+            return true;
+        }
+        return false;
     }
 
     private function getTasks($user_id)

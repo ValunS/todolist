@@ -33,11 +33,11 @@ Route::controller(TodolistController::class)->group(function() {
     Route::get('/todolist', 'index')->name('todolist.index');
     Route::get('/todolist/tasks', 'show')->middleware("auth")->name('todolist.show');
     Route::post('/todolist', 'store')->middleware("auth");
+    Route::post('/todolist/{task_id}', 'update')->name('todolist.update'); //PUT, but files can be sended by POST
     Route::delete('/todolist/{task_id}', 'destroy')->middleware("auth");
-    // Route::get('/task-img/{task_id}/{img_name}', 'imageShow')->name('image.show');
 });
 
 Route::controller(TaskImageController::class)->group(function() {
-    Route::get('/task-img/{task_id}/{imgName_Or_thumbPath}/',                    'show')->name('image.show');
     Route::get('/task-img/{task_id}/{imgName_Or_thumbPath}/{imgName_If_exists}', 'show')->name('image.show');
+    Route::get('/task-img/{task_id}/{imgName_Or_thumbPath}/',                    'show')->name('image.show');
 });
