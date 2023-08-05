@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('todolists_tasks', function (Blueprint $table) {
+        Schema::create('tasks', function (Blueprint $table) {
             $table->id();
             $table->string("title");
             $table->text("full_text")->default("")->nullable();
@@ -21,11 +21,11 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            //FK
+            //FK user -> tasks
             $table->unsignedBigInteger("user_id")->nullable();
 
-            $table->index("user_id", "todolist_tasks_user_idx");
-            $table->foreign("user_id", "todolist_tasks_user_fk")->on("users")->references("id");
+            $table->index("user_id", "tasks_user_idx");
+            $table->foreign("user_id", "tasks_user_fk")->on("users")->references("id");
         });
     }
 
@@ -34,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('todolist_tasks');
+        Schema::dropIfExists('tasks');
     }
 };

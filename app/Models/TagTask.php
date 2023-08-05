@@ -6,16 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Todolist_task extends Model
+class TagTask extends Model
 {
     use HasFactory;
     use SoftDeletes;
 
-    protected $table = "todolists_tasks";
     protected $guarded = [];
     protected $primaryKey = 'id';
 
-    public function user(){
-        return $this->belongsTo(User::class, "todolist_tasks", "id");
+    public function deleteTag($task_id, $tag_id)
+    {
+        $this->where("task_id", "=", $task_id)
+            ->where("tag_id", "=", $tag_id)->delete();
     }
 }

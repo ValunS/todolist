@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Todolist_task;
+use App\Models\Task;
 use Illuminate\Support\Facades\Auth;
 use Image;
 
@@ -29,7 +29,7 @@ class TaskImageController extends Controller
 
     public static function getImageValidation($task_id, $img_src)
     {
-        if ($task_with_this_id = Todolist_task::find($task_id)) { //if current user have task --> true
+        if ($task_with_this_id = Task::find($task_id)) { //if current user have task --> true
             if ($task_with_this_id->user_id == Auth::user()->id) {
                 return true;
             }

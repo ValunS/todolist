@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-
-use App\Models\Todolist_task;
 
 class LoginRegisterController extends Controller
 {
@@ -18,7 +16,7 @@ class LoginRegisterController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except([
-            'logout', 'todolist'
+            'logout', 'todolist',
         ]);
     }
 
@@ -43,20 +41,20 @@ class LoginRegisterController extends Controller
         $request->validate([
             'name' => 'required|string|max:250',
             'email' => 'required|email|max:250|unique:users',
-            'password' => 'required|min:8|confirmed'
+            'password' => 'required|min:8|confirmed',
         ]);
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
         ]);
 
         $credentials = $request->only('email', 'password');
         Auth::attempt($credentials);
         $request->session()->regenerate();
         return redirect()->route('todolist.index')
-        ->withSuccess('You have successfully registered & logged in!');
+            ->withSuccess('You have successfully registered & logged in!');
     }
 
     /**
@@ -79,11 +77,10 @@ class LoginRegisterController extends Controller
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
         ]);
 
-        if(Auth::attempt($credentials))
-        {
+        if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             return redirect()->route('todolist.index')
                 ->withSuccess('You have successfully logged in!');
@@ -93,8 +90,8 @@ class LoginRegisterController extends Controller
             'email' => 'Your provided credentials do not match in our records.',
         ])->onlyInput('email');
 
-    } 
-    
+    }
+
     /**
      * Display a todolist to authenticated users.
      *
@@ -102,21 +99,16 @@ class LoginRegisterController extends Controller
      */
     public function todolist()
     {
-        if(Auth::check())
-        {   
-            //dump tasks from this user
-            User::all()->where("id", "=", Auth::user()->id)->each(function($item){
-                    dump($item->todolist_tasks);
-                });
+        if (Auth::check()) {
             return view('todolist.index');
         }
-        
+
         return redirect()->route('login')
             ->withErrors([
-            'email' => 'Please login to access the todolist.',
-        ])->onlyInput('email');
-    } 
-    
+                'email' => 'Please login to access the todolist.',
+            ])->onlyInput('email');
+    }
+
     /**
      * Log out the user from application.
      *
@@ -129,7 +121,7 @@ class LoginRegisterController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('login')
-            ->withSuccess('You have logged out successfully!');;
-    }    
+            ->withSuccess('You have logged out successfully!');
+    }
 
 }

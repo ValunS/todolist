@@ -46,7 +46,7 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    function todolist_tasks(){
-        return $this->hasMany(Todolist_task::class, "user_id", "id");
+    function tasks(){
+        return $this->hasMany(Task::class, "user_id", "id");
     }
 }

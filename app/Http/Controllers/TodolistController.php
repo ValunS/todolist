@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Todolist_task;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
-// use Intervention\Image\Facades\Image as Image;
 
 class TodolistController extends Controller
 {
     public function index()
     {
+        // dd($this->getTasksWithTags(Auth::user()->id));
         if (Auth::check()) {
-            $tasks = $this->getTasks(Auth::user()->id);
+            $tasks = $this->getTasksWithTags(Auth::user()->id);
             return view("todolist.index", ["tasks" => $tasks]);
         }
 
@@ -27,7 +26,7 @@ class TodolistController extends Controller
     public function show()
     {
         if (Auth::check()) {
-            $tasks = $this->getTasks(Auth::user()->id);
+            $tasks = $this->getTasksWithTags(Auth::user()->id);
             return response()->json($tasks);
         };
         return redirect()->route('login')
@@ -41,7 +40,7 @@ class TodolistController extends Controller
         if (Auth::check()) {
             $response = []; //collect all messages
             $img_src = null;
-            $createdTask = Todolist_task::create([
+            $createdTask = Task::create([
                 "title" => $request->title,
                 "full_text" => $request->full_text,
                 "completed" => 0,
@@ -49,12 +48,10 @@ class TodolistController extends Controller
                 "user_id" => Auth::user()->id,
             ]);
             if ($request->hasFile('todo-img') && $request->file('todo-img')->isValid()) {
-                // if (TaskImageController::storeImageValidation($request->file('todo-img'))) {
                 $currTaskId = $createdTask->id;
                 $TaskImageClass = new TaskImageController;
                 $img_src = $TaskImageClass->storeImage($currTaskId, $request->file("todo-img")); //store img and get src
                 $createdTask->update(["img_src" => $img_src]); //put stored img_src to task
-                // }
             } else {
                 $response[] = ["BAD" => "Image not stored"];
             };
@@ -84,7 +81,7 @@ class TodolistController extends Controller
             } else {
                 $response[] = ["BAD" => "Image not stored"];
             };
-            $Task = Todolist_task::find((int) $id)->update(
+            $Task = Task::find((int) $id)->update(
                 $dataForUpdateTask
             );
 
@@ -101,7 +98,7 @@ class TodolistController extends Controller
     public function destroy($task_id)
     {
         if (Auth::check()) {
-            $task = Todolist_task::findOrFail($task_id);
+            $task = Task::findOrFail($task_id);
             if ($task->user_id == Auth::user()->id) {
                 $task->delete();
                 return "Success deleted task " . $task_id;
@@ -123,17 +120,32 @@ class TodolistController extends Controller
         return false;
     }
 
-    private function getTasks($user_id)
+    private function getTags($task)
     {
-        $tasks = User::all()->where("id", "=", $user_id)->first()->todolist_tasks;
+        $tags_arr = [];
+        $task_tags = $task->tags;
+        foreach ($task_tags as $tag) {
+            $tags_arr[] = [
+                "id" => $tag->id,
+                "name" => $tag->name,
+            ];
+        }
+        return $tags_arr;
+    }
+
+    private function getTasksWithTags($user_id)
+    {
+        $tasks = User::all()->where("id", "=", $user_id)->first()->tasks;
         $tasks_arr = [];
         foreach ($tasks as $task) {
+
             $tasks_arr[] = [
                 "id" => $task->id,
                 "title" => $task->title,
                 "full_text" => $task->full_text,
                 "img_src" => $task->img_src,
                 "completed" => $task->completed,
+                // "tags" => $this->getTags($task),
             ];
         };
         return $tasks_arr;
